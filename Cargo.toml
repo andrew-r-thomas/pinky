@@ -1,0 +1,14 @@
+[package]
+name = "pinky"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.9", features = ["derive"] }
+stringmetrics = "2.2.2"
+tree-sitter = "0.22.6"
+tree-sitter-md = "0.2.3"
+tree-sitter-pinky = "0.0.1"
+
+[build-dependencies]
+cc="*"
