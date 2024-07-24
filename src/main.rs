@@ -1,5 +1,6 @@
 use std::{
     collections::HashSet,
+    env::args,
     fs::{read, read_dir, ReadDir},
 };
 
@@ -20,6 +21,9 @@ of links.
 #[derive(ClapParser)]
 struct CheckDups {
     path: std::path::PathBuf,
+
+    #[arg(short, long)]
+    thresh: usize,
 }
 
 fn main() {
@@ -35,7 +39,13 @@ fn main() {
     let read_dir = read_dir(args.path).expect("not a valid directory");
     let mut link_table = Vec::<HashSet<String>>::new();
 
-    build_link_table(&mut link_table, read_dir, &wiki_link_query, &mut parser);
+    build_link_table(
+        &mut link_table,
+        read_dir,
+        &wiki_link_query,
+        &mut parser,
+        args.thresh,
+    );
 
     for dups in link_table {
         println!("dups: {:?}", dups);
@@ -47,6 +57,7 @@ fn build_link_table(
     dir: ReadDir,
     query: &Query,
     parser: &mut Parser,
+    thresh: usize,
 ) {
     for entry in dir {
         if let Ok(e) = entry {
@@ -78,7 +89,7 @@ fn build_link_table(
                                         let mut out = true;
                                         for link in list.iter() {
                                             let dist = levenshtein(link, text);
-                                            if dist > 3 {
+                                            if dist > thresh as u32 {
                                                 out = false
                                             }
                                         }
@@ -100,7 +111,7 @@ fn build_link_table(
                     }
                 }
             } else if file_type.is_dir() {
-                build_link_table(table, read_dir(e.path()).unwrap(), query, parser);
+                build_link_table(table, read_dir(e.path()).unwrap(), query, parser, thresh);
             }
         }
     }
