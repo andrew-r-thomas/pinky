@@ -1,7 +1,7 @@
 use std::{
     collections::HashSet,
-    env::args,
-    fs::{read, read_dir, ReadDir},
+    fs::{read, read_dir, File, ReadDir},
+    io::Write,
 };
 
 use clap::Parser as ClapParser;
@@ -10,11 +10,7 @@ use tree_sitter::{Parser, Query, QueryCursor};
 
 /*
 
-NOTE:
-ok so we want a collection of lists that contain links that are all
-within a threshold distance of each other.
-so we need all the unique links, and then we want distances between every pair
-of links.
+
 
 */
 
@@ -47,8 +43,14 @@ fn main() {
         args.thresh,
     );
 
+    let mut out_file = File::create("duplicates.txt").unwrap();
+
     for dups in link_table {
-        println!("dups: {:?}", dups);
+        out_file.write_all(b"group:\n").unwrap();
+        for d in dups {
+            out_file.write_all(format!("{}\n", d).as_bytes()).unwrap();
+        }
+        out_file.write_all(b"\n").unwrap();
     }
 }
 
@@ -65,6 +67,7 @@ fn build_link_table(
             if file_type.is_file() {
                 if let Some(extension) = e.path().extension() {
                     if extension == "md" {
+                        // TODO: streaming, this is super slow for large files
                         let bytes = read(e.path()).unwrap();
                         let tree = parser.parse(bytes.clone(), None).unwrap();
                         let mut query_cursor = QueryCursor::new();
