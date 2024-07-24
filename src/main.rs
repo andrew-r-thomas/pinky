@@ -20,6 +20,9 @@ struct CheckDups {
 
     #[arg(short, long)]
     thresh: usize,
+
+    #[arg(short, long)]
+    out: String,
 }
 
 fn main() {
@@ -43,7 +46,7 @@ fn main() {
         args.thresh,
     );
 
-    let mut out_file = File::create("duplicates.txt").unwrap();
+    let mut out_file = File::create(args.out).unwrap();
 
     for dups in link_table {
         out_file.write_all(b"group:\n").unwrap();
