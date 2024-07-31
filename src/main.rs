@@ -47,8 +47,13 @@ fn main() {
     );
 
     let mut out_file = File::create(args.out).unwrap();
+    link_table.sort_by(|a, b| b.len().cmp(&a.len()));
 
     for dups in link_table {
+        if dups.len() == 1 {
+            break;
+        }
+
         out_file.write_all(b"group:\n").unwrap();
         for d in dups {
             out_file.write_all(format!("{}\n", d).as_bytes()).unwrap();
