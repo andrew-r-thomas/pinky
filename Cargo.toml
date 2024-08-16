@@ -9,6 +9,7 @@ stringmetrics = "2.2.2"
 tree-sitter = "0.22.6"
 tree-sitter-md = "0.2.3"
 tree-sitter-pinky = "0.0.1"
+winit = "0.30.5"
 
 [build-dependencies]
 cc="*"

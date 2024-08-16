@@ -1,10 +1,14 @@
+pub mod graph;
+
 use std::{
     collections::HashSet,
     fs::{read, read_dir, File, ReadDir},
     io::Write,
+    path::PathBuf,
 };
 
-use clap::Parser as ClapParser;
+use clap::{arg, Command, Parser as ClapParser};
+use graph::GraphView;
 use stringmetrics::levenshtein;
 use tree_sitter::{Parser, Query, QueryCursor};
 
@@ -26,39 +30,58 @@ struct CheckDups {
 }
 
 fn main() {
-    let args = CheckDups::parse();
-    let mut parser = Parser::new();
-    let language = tree_sitter_pinky::language();
-    parser
-        .set_language(&language)
-        .expect("failed to load pinky grammar");
-
-    let wiki_link_query = Query::new(&language, "(link_text) @link_text").unwrap();
-
-    let read_dir = read_dir(args.path).expect("not a valid directory");
-    let mut link_table = Vec::<HashSet<String>>::new();
-
-    build_link_table(
-        &mut link_table,
-        read_dir,
-        &wiki_link_query,
-        &mut parser,
-        args.thresh,
-    );
-
-    let mut out_file = File::create(args.out).unwrap();
-    link_table.sort_by(|a, b| b.len().cmp(&a.len()));
-
-    for dups in link_table {
-        if dups.len() == 1 {
-            break;
+    let cmd = Command::new("pinky")
+        .subcommand_required(true)
+        .subcommand(Command::new("graph"))
+        .subcommand(Command::new("dups").args([
+            arg!(--"path" <PATH>).value_parser(clap::value_parser!(PathBuf)),
+            arg!(--"thresh" <THRESH>).value_parser(clap::value_parser!(usize)),
+            arg!(--"out" <OUT>).value_parser(clap::value_parser!(String)),
+        ]));
+    match cmd.get_matches().subcommand() {
+        Some(("graph", _)) => {
+            GraphView::start();
         }
+        Some(("dups", sub_matches)) => {
+            let mut parser = Parser::new();
+            let language = tree_sitter_pinky::language();
+            parser
+                .set_language(&language)
+                .expect("failed to load pinky grammar");
 
-        out_file.write_all(b"group:\n").unwrap();
-        for d in dups {
-            out_file.write_all(format!("{}\n", d).as_bytes()).unwrap();
+            let wiki_link_query = Query::new(&language, "(link_text) @link_text").unwrap();
+
+            let path = sub_matches.get_one::<PathBuf>("path").unwrap();
+            let thresh = sub_matches.get_one::<usize>("thresh").unwrap();
+            let out = sub_matches.get_one::<String>("out").unwrap();
+            println!("path: {:?}", path.file_name());
+            let read_dir = read_dir(path).expect("not a valid directory");
+            let mut link_table = Vec::<HashSet<String>>::new();
+
+            build_link_table(
+                &mut link_table,
+                read_dir,
+                &wiki_link_query,
+                &mut parser,
+                *thresh,
+            );
+
+            let mut out_file = File::create(out).unwrap();
+            link_table.sort_by(|a, b| b.len().cmp(&a.len()));
+
+            for dups in link_table {
+                if dups.len() == 1 {
+                    break;
+                }
+
+                out_file.write_all(b"group:\n").unwrap();
+                for d in dups {
+                    out_file.write_all(format!("{}\n", d).as_bytes()).unwrap();
+                }
+                out_file.write_all(b"\n").unwrap();
+            }
         }
-        out_file.write_all(b"\n").unwrap();
+        _ => unreachable!(),
     }
 }
 
