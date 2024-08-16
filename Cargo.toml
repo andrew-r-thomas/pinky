@@ -5,11 +5,13 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.9", features = ["derive"] }
+pollster = "0.3.0"
 stringmetrics = "2.2.2"
 tree-sitter = "0.22.6"
 tree-sitter-md = "0.2.3"
 tree-sitter-pinky = "0.0.1"
-winit = "0.30.5"
+wgpu = "22.1.0"
+winit = "0.29"
 
 [build-dependencies]
 cc="*"
