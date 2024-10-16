@@ -4,15 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bytemuck = {version = "1.17.0", features = ["derive"]}
 clap = { version = "4.5.9", features = ["derive"] }
-pollster = "0.3.0"
-stringmetrics = "2.2.2"
-tree-sitter = "0.22.6"
-tree-sitter-md = "0.2.3"
-tree-sitter-pinky = "0.0.1"
-wgpu = "22.1.0"
-winit = "0.29"
-
-[build-dependencies]
-cc="*"
+rusqlite = "0.32.1"
+serde = { version = "1.0.210", features = ["derive"] }
+toml = "0.8.19"
