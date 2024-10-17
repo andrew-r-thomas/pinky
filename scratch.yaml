@@ -1,0 +1,7 @@
+---
+id: "this is an id"
+name: "scratch"
+properties:
+  title: "string"
+  author: "author"
+  thing: DEFAULT
