@@ -7,8 +7,8 @@ pub struct Page {
     schema: Schema,
 }
 
-impl Page {
-    pub fn new(schema_name: Option<String>, lib_config: LibraryConfig) -> Self {
-        Self { id: Uuid::new_v4() }
-    }
-}
+// impl Page {
+//     pub fn new(schema_name: Option<String>, lib_config: LibraryConfig) -> Self {
+//         Self { id: Uuid::new_v4() }
+//     }
+// }

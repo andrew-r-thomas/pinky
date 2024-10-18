@@ -7,46 +7,22 @@ use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::schema::{Property, Schema};
+use crate::schema::{Frontmatter, Schema};
 
 pub struct Library {
-    path: PathBuf,
-    config: LibraryConfig,
+    pub path: PathBuf,
+    pub config: LibraryConfig,
     db_conn: Connection,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct LibraryConfig {
-    schema_dir: String,
-    default_schema: String,
-}
-
-pub struct Frontmatter {
-    id: String,
-    schema: String,
-    properties: Vec<Property>,
-}
-
-impl Frontmatter {
-    pub fn new(id: Uuid, schema: &Schema) -> Self {
-        todo!()
-    }
-
-    pub fn to_yaml_string(&self) -> String {
-        todo!()
-    }
-
-    pub fn from_file(file: &File) -> Self {
-        todo!()
-    }
-
-    pub fn to_sql_upsert(&self) -> String {
-        todo!()
-    }
+    pub schema_dir: String,
+    pub default_schema: String,
 }
 
 impl Library {
-    pub fn new(path: &Path, schema_dir: Option<String>, default_schema: Option<Schema>) -> Self {
+    pub fn new(path: &Path, schema_dir: String, default_schema: Schema) -> Self {
         // get path and name of lib from path
         let path = path.to_path_buf();
         let name = path
@@ -63,8 +39,6 @@ impl Library {
         fs::create_dir(path.clone()).unwrap();
 
         // get the schema dir and default schema from args, make config from that
-        let schema_dir = schema_dir.unwrap_or("schemas".into());
-        let default_schema = default_schema.unwrap_or(Schema::default());
         let config = LibraryConfig {
             schema_dir,
             default_schema: default_schema.name.clone(),
@@ -137,7 +111,7 @@ impl Library {
         let schema = schema.unwrap_or(self.config.default_schema.clone());
         for entry in schema_dir {
             if let Ok(e) = entry {
-                if e.file_name().to_str().unwrap() == schema {
+                if e.path().file_stem().unwrap().to_str().unwrap() == schema {
                     let schema_string = fs::read_to_string(e.path()).unwrap();
                     page_schema = Some(Schema::from_yaml_string(schema_string));
                     break;
@@ -145,13 +119,17 @@ impl Library {
             }
         }
         let page_schema = page_schema.unwrap();
-
+        //
         let page_id = Uuid::new_v4();
         let frontmatter = Frontmatter::new(page_id, &page_schema);
 
         let mut page_path = self.path.clone();
         page_path.push(format!("{}.{}.md", page_schema.name, page_id));
-        fs::write(&page_path, frontmatter.to_yaml_string()).unwrap();
+        fs::write(
+            &page_path,
+            String::from_iter(["---\n", &frontmatter.to_yaml_string(), "---"]),
+        )
+        .unwrap();
 
         page_path
     }
